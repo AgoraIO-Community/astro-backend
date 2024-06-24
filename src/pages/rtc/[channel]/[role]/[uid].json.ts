@@ -28,7 +28,6 @@ export async function GET({ params }: APIContext) {
     if (!params.uid || params.uid === '') {
         return new Response("uid is required", { status: 400, headers })
     }
-    //check for valid tokentype
     const expireTime = 600;
     const privilegeExpireTime = 600;
     let token;
