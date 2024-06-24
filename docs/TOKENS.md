@@ -9,7 +9,7 @@ Astro is created to be the perfect use case for a content-heavy website. The opp
 
 Spoilers. My love for Astro has grown deeper. 
 
-![Token Flow](/assets/token-flow.png)
+![Token Flow](assets/token-flow.png)
 
 ## Prerequisites
 1. NodeJS and Astro installed.
@@ -125,7 +125,7 @@ return new Response(JSON.stringify({
 
 You now have a fully working token server that you can use to develop your applications. You should use this token server primarily for development purposes. If you are building in production, you should add some user verification and other security measures to ensure that the only people joining calls are the ones who are supposed to.
 
-![Token Flow](/assets/token-flow.png)
+![Token Flow](assets/token-flow.png)
 
 The conclusion of this experiment is that Astro can handle building backends just as well as content sites and I will keep using it for all my projects.
 
