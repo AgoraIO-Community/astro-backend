@@ -3,9 +3,9 @@ title: Build a Token Generator with Astro
 description: Learn how you can generate tokens using SSR frameworks like Astro.
 ---
 
-I love building websites with Astro. It's my favorite web framework, and I don't want to use any other one. However, I must stress test it and ensure Astro is flexible enough to fully commit.
+Astro is created to be the perfect use case for a content-heavy website. A content heavy site is mostly front end code. The opposite of that is a backend server, and in this guide, we will build a backend token generator for Agora video calls. 
 
-Astro is created to be the perfect use case for a content-heavy website. The opposite of that is a backend, and in this guide, we will build a backend token generator to be used for Agora video calls.
+I love building websites with Astro. It's my favorite web framework, and I don't want to use any other one. However, I must stress test it and ensure Astro is flexible enough to fully commit.
 
 Spoilers. My love for Astro has grown deeper. 
 
@@ -18,21 +18,17 @@ Spoilers. My love for Astro has grown deeper.
 ## Project Setup
 To create a new Astro project, run `npm create astro@latest`. Follow all the default options during the setup process, except use an empty template. This way, our project will be free of distractions. Then, we must install the Agora Token package to generate our tokens. You can do that using `npm i agora-token`.
 
-You must also create a `.env` and add `APP_ID` and `APP_CERTIFICATE` values, which you can find within your Agora Console.
+You must also create a `.env` and add `APP_ID` and `APP_CERTIFICATE` values, which you can find within your Agora Console. This information is used to create tokens and join video calls, so it's best not to show these values publicly. When you create an Astro project, it will create a `.gitignore` file for you. This file will have `.env` inside, meaning the `.env` file will not be pushed to GitHub or other git services.
 
 ## What is a Token?
 Tokens are a form of authentication that verifies whether the user can access parts of an application. In this case, we want to use them to authenticate the user and their privileges within a video call. 
 
-The token is generated based on the HMAC-SHA256 cryptographic algorithm. This algorithm is an industry standard for authentication. 
-
-We don't need to dive into cybersecurity theory; just know that it's a good algorithm that will give you a safe token, and we can generate this token using the `agora-token` package.
+The token is generated based on the HMAC-SHA256 cryptographic algorithm. We don't need to dive into cybersecurity theory; just know that it's an industry standard for authentication and it will give you a code that verifies your user's identity. In Node we can generate this token using the agora-token package.
 
 ## Setting up an Endpoint in Astro
-To create an endpoint in Astro, you need to add a Javascript or Typescript file to the `pages` directory. This file should have the file name, followed by the return datatype extension, followed by `.js` or `.ts`.The Javascript and Typescript extensions will be removed during the build process.
+To create an endpoint in Astro, add a Javascript or Typescript file to the `pages` directory. The name of the file should have the datatype extension in it. So your file name will look like `<name>.<return-type>.ts`. The Javascript and Typescript extensions will be removed during the build process.
 
-The most common type of return data is JSON, so our file will be a `.json.ts` file. We also need to pass some parameters. In Astro, you do this using brackets for the file/folder name. 
-
-Our file path for generating tokens will be `pages/rtc/[channel]/[role]/[uid].json.ts`, which will result in the end point of `rtc/{channel}/{role}/{uid}.json`.
+The file path we will be using for generating our token is `pages/rtc/[channel]/[role]/[uid].json.ts`. This endpoint will return JSON data, so the file name ends with `.json.ts`. Our endpoint will also need parameters. In Astro, you use brackets for the file/folder name. Since the Typescript extension gets removed, and the `pages` directory doesn't show up in the URL, our final endpoint will be: `rtc/{channel}/{role}/{uid}.json`.
 
 ## Define the endpoint
 Our endpoint will be a `GET` request because our objective is to retrieve a token. You can define this in Astro by exporting a `GET` function and returning a JSON Response.
@@ -75,16 +71,16 @@ export async function GET({ params }: APIContext) {
 * "Access-Control-Allow-Origin": "*" allows all domains to access the server, which is helpful for APIs or during development.
 * "Access-Control-Allow-Methods": "GET, OPTIONS" specifies that only GET and OPTIONS methods are permitted, controlling how other sites can interact with the server.
 
-These headers will allow our API to work well in production and development, but for production you should limit only the origins that should be allowed.
+These headers will allow our API to work well in production and development by allowing all domains. For production, you should limit only the origins that should be allowed.
 
 ## Input Checks
-To generate the token, we need a few input parameters that we retrieve from the route. We need to check that `channel` and `uid` are not empty. If they are, return a Bad Request Error.
+The token generation function requires the `channel`, `role`, and `uid`. These are used to ensure that the token includes correct authentication and privileges. To ensure we pass accurate data, check that `channel` and `uid` are not empty. If they are, return a Bad Request Error.
 
 The role determines what type of access the user requesting a token should have. There are two possible roles:
 * publisher - Can publish (or send) their data to the channel. They can also receive data from the channel.
 * subscriber - Can only receive data and cannot publish data.
 
-Those are the only two valid inputs. If one of those inputs is in the URL, we can assign the `role` variable to a number predefined within the `agora-token` package. If the request does not include one of these options, we send back a Bad Request Error.
+Those are the only two valid inputs. If one of those inputs is in the URL, we can assign the `role` variable to an enum predefined within the `agora-token` package. If the request does not include one of these options, we send back a Bad Request Error.
 
 ```ts
 //check for valid channel
@@ -107,7 +103,7 @@ if (!params.uid || params.uid === '') {
 ```
 
 ## Generate Token
-At this point, we have all the data needed to generate and return the token. The only values that we haven't defined are the token expiration time and the privilege expiration time. These are in seconds, so I will set them both to 10 minutes (600 seconds).
+The last piece of information we need to be able to generate our token is the token expiration time and the privilege expiration time. These are in seconds, so I will set them to 10 minutes (600 seconds). You can set this to whatever time is appropriate for your use case.
 
 The privilege expiration time defines how long the user will have their privileges within the channel and access to the channel in general. If the privilege time expires, the user can still listen to the call but can no longer publish. And once the token expires in general, they will lose access to the channel completely.
 
@@ -123,10 +119,15 @@ return new Response(JSON.stringify({
 }), { headers })
 ```
 
+## Run the Backend
+Run this token generator using `npm run dev`; now you can type arbitrary values into the URL to receive a token. For example, the URL `localhost:4321/rtc/test/publisher/1.json` means the user with uid `1` requests a token for the `test` channel and wants to publish and receive data. When you type this into the URL you should receive a response of: 
+
+```
+{"rtcToken":"<a long string of letters and numbers>"}
+```
+
 You now have a fully working token server that you can use to develop your applications. You should use this token server primarily for development purposes. If you are building in production, you should add some user verification and other security measures to ensure that the only people joining calls are the ones who are supposed to.
 
 ![Token Flow](assets/token-flow.png)
 
-The conclusion of this experiment is that Astro can handle building backends just as well as content sites and I will keep using it for all my projects.
-
-Since we have a token backend, the next logical step is to set up cloud recording for your Agora video call. Visit the [Cloud Recording documentation](https://docs.agora.io/en/cloud-recording/overview/product-overview) to keep learning.
+Astro passed our stress test with flying colors. It was built to support content-heavy sites but performs just as well for backend projects. Astro is a great solution for full-stack websites. Now that you have a token generator built in Astro, you can add a front end and have a secure video call all from one codebase. Here is a [guide on how to build a Video Call front end with Astro](https://www.agora.io/en/blog/build-a-video-call-app-with-astro-and-reactjs/).
