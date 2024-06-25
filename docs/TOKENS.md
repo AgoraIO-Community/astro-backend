@@ -18,7 +18,7 @@ Spoilers. My love for Astro has grown deeper.
 ## Project Setup
 To create a new Astro project, run `npm create astro@latest`. Follow all the default options during the setup process, except use an empty template. This way, our project will be free of distractions. Then, we must install the Agora Token package to generate our tokens. You can do that using `npm i agora-token`.
 
-You must also create a `.env` and add `APP_ID` and `APP_CERTIFICATE` values, which you can find within your Agora Console. This information is used to create tokens and join video calls, so it's best not to show these values publicly. When you create an Astro project, it will create a `.gitignore` file for you. This file will have `.env` inside, meaning the `.env` file will not be pushed to GitHub or other git services.
+To generate a token, we need to use our Agora App ID and App Certificate. The App Certificate is our "secret" key and should be hidden from public view. We will use a `.env` file to store our sensitive data. When we generated our Astro project, the `.env` was already listed in the `.gitignore`, which means it will not be pushed to GitHub. In the `.env`, add the project `APP_ID` and `APP_CERTIFICATE`, which you can find in your Agora Console.
 
 ## What is a Token?
 Tokens are a form of authentication that verifies whether the user can access parts of an application. In this case, we want to use them to authenticate the user and their privileges within a video call. 
