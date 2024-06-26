@@ -37,11 +37,7 @@ We also import the `agora-token` package and bring in our `APP_ID` and `APP_CERT
 
 
 ```ts
-import agoraToken from "agora-token";
 import type { APIContext } from "astro";
-
-const APP_ID = import.meta.env.APP_ID;
-const APP_CERTIFICATE = import.meta.env.APP_CERTIFICATE;
 
 export async function GET({ params }: APIContext) {
   return new Response(
@@ -83,22 +79,31 @@ The role determines what type of access the user requesting a token should have.
 Those are the only two valid inputs. If one of those inputs is in the URL, we can assign the `role` variable to an enum predefined within the `agora-token` package. If the request does not include one of these options, we send back a Bad Request Error.
 
 ```ts
-//check for valid channel
-if (!params.channel) {
-    return new Response("channel is required", { status: 400, headers })
-}
-//check for valid role
-let role;
-if (params.role === 'publisher') {
-    role = agoraToken.RtcRole.PUBLISHER;
-} else if (params.role === 'subscriber') {
-    role = agoraToken.RtcRole.SUBSCRIBER
-} else {
-    return new Response("role is incorrect", { status: 400, headers })
-}
-//check for valid uid
-if (!params.uid || params.uid === '') {
-    return new Response("uid is required", { status: 400, headers })
+import agoraToken from "agora-token";
+
+export async function GET({ params }: APIContext) {
+    //check for valid channel
+    if (!params.channel) {
+        return new Response("channel is required", { status: 400, headers })
+    }
+    //check for valid role
+    let role;
+    if (params.role === 'publisher') {
+        role = agoraToken.RtcRole.PUBLISHER;
+    } else if (params.role === 'subscriber') {
+        role = agoraToken.RtcRole.SUBSCRIBER
+    } else {
+        return new Response("role is incorrect", { status: 400, headers })
+    }
+    //check for valid uid
+    if (!params.uid || params.uid === '') {
+        return new Response("uid is required", { status: 400, headers })
+    }
+  return new Response(
+    JSON.stringify({
+      rtcToken: "token",
+    })
+  )
 }
 ```
 
@@ -108,15 +113,22 @@ The last piece of information we need to be able to generate our token is the to
 The privilege expiration time defines how long the user will have their privileges within the channel and access to the channel in general. If the privilege time expires, the user can still listen to the call but can no longer publish. And once the token expires in general, they will lose access to the channel completely.
 
 ```ts
-const expireTime = 600;
-const privilegeExpireTime = 600;
-let token;
+const APP_ID = import.meta.env.APP_ID;
+const APP_CERTIFICATE = import.meta.env.APP_CERTIFICATE;
 
-token = agoraToken.RtcTokenBuilder.buildTokenWithUid(APP_ID, APP_CERTIFICATE, params.channel, params.uid, role, expireTime, privilegeExpireTime);
+export async function GET({ params }: APIContext) {
+    // ...
+    
+    const expireTime = 600;
+    const privilegeExpireTime = 600;
+    let token;
 
-return new Response(JSON.stringify({
-    rtcToken: token
-}), { headers })
+    token = agoraToken.RtcTokenBuilder.buildTokenWithUid(APP_ID, APP_CERTIFICATE, params.channel, params.uid, role, expireTime, privilegeExpireTime);
+
+    return new Response(JSON.stringify({
+        rtcToken: token
+    }), { headers })
+}
 ```
 
 ## Run the Backend
