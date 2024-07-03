@@ -1,0 +1,29 @@
+---
+import agoraToken from "agora-token";
+
+import Call from "../../components/Call.tsx";
+import { handleGetToken } from "../rtc/[channel]/[role]/[uid].json";
+
+const { channelName } = Astro.params;
+// Random user uid. Uid 1 and 2 are reserved for cloud recording and real time transcription.
+const uid = (Math.floor(Math.random() * 250) + 3).toString();
+
+const token = await handleGetToken({
+  channel: channelName!,
+  role: agoraToken.RtcRole.PUBLISHER,
+  uid: uid,
+});
+---
+
+<div class="static m-0 p-0">
+  <p class="absolute z-10 mt-2 ml-12 text-2xl font-bold text-gray-900">
+    {channelName!}
+  </p>
+  <Call
+    client:only="react"
+    channelName={channelName!}
+    appId={import.meta.env.APP_ID}
+    token={token}
+    uid={uid}
+  />
+</div>

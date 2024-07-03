@@ -28,15 +28,17 @@ export async function GET({ params }: APIContext) {
     if (!params.uid || params.uid === '') {
         return new Response("uid is required", { status: 400, headers })
     }
-    const expireTime = 600;
-    const privilegeExpireTime = 600;
-    let token;
 
-    token = agoraToken.RtcTokenBuilder.buildTokenWithUid(APP_ID, APP_CERTIFICATE, params.channel, params.uid, role, expireTime, privilegeExpireTime);
+    const token = await handleGetToken({ channel: params.channel, role: role, uid: params.uid })
 
     return new Response(JSON.stringify({
         rtcToken: token
     }), { headers })
 }
 
+export async function handleGetToken({ channel, role, uid }: { channel: string, role: number, uid: string }) {
+    const expireTime = 45;
+    const privilegeExpireTime = 45;
 
+    return agoraToken.RtcTokenBuilder.buildTokenWithUid(APP_ID, APP_CERTIFICATE, channel, uid, role, expireTime, privilegeExpireTime);
+}
