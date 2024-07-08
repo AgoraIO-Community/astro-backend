@@ -6,7 +6,7 @@ import sendBadRequest from "../../../utils/sendBadRequest";
 const APP_ID = import.meta.env.APP_ID;
 
 export async function POST({ request }: APIContext) {
-    const { sid, resourceId, uid, channel } = await request.json()
+    const { uid, channel, sid, resourceId } = await request.json()
 
     if (!channel) {
         return sendBadRequest("channel is required")
