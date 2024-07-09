@@ -2,7 +2,7 @@ import type { APIContext } from "astro";
 import generateCredential from "../../../utils/generateCredential";
 import generateResource from "../../../utils/generateResource";
 import makeRequest from "../../../utils/makeRequest";
-import sendBadRequest from "../../../utils/sendBadRequest";
+import { sendBadRequest } from "../../../utils/sendResponse";
 import { handleGetToken } from "../token.json";
 
 const APP_ID = import.meta.env.APP_ID;

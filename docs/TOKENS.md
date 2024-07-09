@@ -28,82 +28,90 @@ The token is generated based on the HMAC-SHA256 cryptographic algorithm. We don'
 ## Setting up an Endpoint in Astro
 To create an endpoint in Astro, add a Javascript or Typescript file to the `pages` directory. The name of the file should have the datatype extension in it. So your file name will look like `<name>.<return-type>.ts`. The Javascript and Typescript extensions will be removed during the build process.
 
-The file path we will be using for generating our token is `pages/rtc/[channel]/[role]/[uid].json.ts`. This endpoint will return JSON data, so the file name ends with `.json.ts`. Our endpoint will also need parameters. In Astro, you use brackets for the file/folder name. Since the Typescript extension gets removed, and the `pages` directory doesn't show up in the URL, our final endpoint will be: `rtc/{channel}/{role}/{uid}.json`.
+The file path we will be using for generating our token is `pages/api/token.json.ts`. This endpoint will return JSON data, so the file name ends with `.json.ts`. I like to put all endpoints within an `api` folder so that they are separated from front end routes. Since the Typescript extension gets removed, and the `pages` directory doesn't show up in the URL, our final endpoint will be: `api/token.json`.
 
 ## Define the endpoint
-Our endpoint will be a `GET` request because our objective is to retrieve a token. You can define this in Astro by exporting a `GET` function and returning a JSON Response.
-
-We also import the `agora-token` package and bring in our `APP_ID` and `APP_CERTIFICATE`, which we defined in the `.env` file.
+Our endpoint will need some input information so we will use a `POST` request and retrieve the information from the body. You can define this in Astro by exporting a `POST` function and returning a JSON Response.
 
 
 ```ts
 import type { APIContext } from "astro";
 
-export async function GET({ params }: APIContext) {
-  return new Response(
-    JSON.stringify({
-      rtcToken: "token",
-    })
-  )
-}
-```
-
-## CORS
-We first need to set up our headers so that we don't encounter any CORS issues when using our backend.
-
-```ts
-export async function GET({ params }: APIContext) {
-    const headers = new Headers({
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-    });
+export async function POST({ request }: APIContext) {
+    const { channel, role, uid, expireTime } = await request.json()
 
     return new Response(JSON.stringify({
-        rtcToken: "token"
-    }), { headers })
+        token: "token"
+    }), { status: 200 })
 }
 ```
 
+## Response Helper Functions
+An endpoint needs to return a response. We will abstract away the responses in a `utils/sendResponse.ts` file to make our endpoint code simpler. 
+
+We first need to set up our headers so that we don't encounter any CORS issues when using our backend.
+
 * "Access-Control-Allow-Origin": "*" allows all domains to access the server, which is helpful for APIs or during development.
-* "Access-Control-Allow-Methods": "GET, OPTIONS" specifies that only GET and OPTIONS methods are permitted, controlling how other sites can interact with the server.
+* "Access-Control-Allow-Methods": "POST, OPTIONS" specifies that only POST and OPTIONS methods are permitted, controlling how other sites can interact with the server.
 
 These headers will allow our API to work well in production and development by allowing all domains. For production, you should limit only the origins that should be allowed.
 
+Then we craft a `sendBadRequest` function with a status `400` and a `sendSuccessfulResponse` function with a status `200` that uses the headers we defined.
+
+```ts
+const headers = new Headers({
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+});
+
+const sendBadRequest = (reason: string) => {
+    return new Response(reason, { status: 400, headers });
+}
+
+const sendSuccessfulResponse = (data: any) => {
+    return new Response(JSON.stringify(data), { status: 200, headers });
+}
+
+export { sendBadRequest, sendSuccessfulResponse };
+```
+
 ## Input Checks
-The token generation function requires the `channel`, `role`, and `uid`. These are used to ensure that the token includes correct authentication and privileges. To ensure we pass accurate data, check that `channel` and `uid` are not empty. If they are, return a Bad Request Error.
+The token generation function requires the `channel`, `role`,  `uid`, and `expireTime`. These are used to ensure that the token includes correct authentication and privileges. To ensure we pass accurate data, check that `channel`, `uid`, and `expireTime` are not empty. If they are, return a bad request using our helper function.
 
 The role determines what type of access the user requesting a token should have. There are two possible roles:
 * publisher - Can publish (or send) their data to the channel. They can also receive data from the channel.
 * subscriber - Can only receive data and cannot publish data.
 
-Those are the only two valid inputs. If one of those inputs is in the URL, we can assign the `role` variable to an enum predefined within the `agora-token` package. If the request does not include one of these options, we send back a Bad Request Error.
+Those are the only two valid inputs. If one of those inputs is in the URL, we can assign an `agoraRole` variable to an enum predefined within the `agora-token` package. If the request does not include one of these options, we return a bad request using our helper function.
 
 ```ts
 import agoraToken from "agora-token";
 
-export async function GET({ params }: APIContext) {
-    //check for valid channel
-    if (!params.channel) {
-        return new Response("channel is required", { status: 400, headers })
+export async function POST({ request }: APIContext) {
+    const { channel, role, uid, expireTime } = await request.json()
+
+    if (!channel) {
+        return sendBadRequest("channel is required")
     }
-    //check for valid role
-    let role;
-    if (params.role === 'publisher') {
-        role = agoraToken.RtcRole.PUBLISHER;
-    } else if (params.role === 'subscriber') {
-        role = agoraToken.RtcRole.SUBSCRIBER
+    if (!uid) {
+        return sendBadRequest("uid is required")
+    }
+    if (!expireTime) {
+        return sendBadRequest("expireTime is required")
+    }
+
+    let agoraRole;
+    if (role === 'publisher') {
+        agoraRole = agoraToken.RtcRole.PUBLISHER;
+    } else if (role === 'subscriber') {
+        agoraRole = agoraToken.RtcRole.SUBSCRIBER
     } else {
-        return new Response("role is incorrect", { status: 400, headers })
+        return sendBadRequest("role is incorrect")
     }
-    //check for valid uid
-    if (!params.uid || params.uid === '') {
-        return new Response("uid is required", { status: 400, headers })
-    }
-  return new Response(
-    JSON.stringify({
-      rtcToken: "token",
-    })
-  )
+
+    return new Response(JSON.stringify({
+        token: "token"
+    }), { status: 200 })
 }
 ```
 
