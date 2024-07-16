@@ -76,7 +76,7 @@ export const sendSuccessfulResponse = (data: any) => {
 ```
 
 ## Input Checks
-The token generation function requires `channel`, `role`,  `uid`, and `expireTime`. These are used to ensure that the token includes correct authentication and privileges. To ensure we pass accurate data, check that `channel`, `uid`, and `expireTime` are not empty. If they are, return a Bad Request using our helper function.
+The token generation function requires `channel`, `role`,  `uid`, and `expireTime`. These are used to make sure that the token includes correct authentication and privileges. To ensure we pass accurate data, check that `channel`, `uid`, and `expireTime` are not empty. If they are, return a Bad Request using our helper function.
 
 The role determines what type of access the user requesting a token should have. There are two possible roles:
 * publisher - Can publish their data to the channel. They can also receive data from the channel.

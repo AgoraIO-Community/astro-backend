@@ -35,6 +35,5 @@ export async function POST({ request }: APIContext) {
 }
 
 export async function handleGenerateToken({ channel, role, uid, expireTime }: { channel: string, role: number, uid: string, expireTime: number }) {
-    console.log(APP_ID, APP_CERTIFICATE, channel, uid, role, expireTime, expireTime);
     return agoraToken.RtcTokenBuilder.buildTokenWithUid(APP_ID, APP_CERTIFICATE, channel, uid, role, expireTime, expireTime);
 }
