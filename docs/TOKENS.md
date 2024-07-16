@@ -13,8 +13,7 @@ Spoilers. My love for Astro has grown deeper.
 
 ## Prerequisites
 1. NodeJS and Astro installed.
-2. Know how to send a POST request using Postman
-3. A developer account with [Agora](https://console.agora.io/).
+2. A developer account with [Agora](https://console.agora.io/).
 
 ## Project Setup
 To create a new Astro project, run `npm create astro@latest`. Follow all the default options during the setup process, except use an empty template. This way, our project will be free of distractions. Then, we must install the Agora Token package to generate our tokens. You can do that using `npm i agora-token`.
@@ -144,7 +143,21 @@ export async function handleGenerateToken({ channel, role, uid, expireTime }: { 
 ```
 
 ## Run the Backend
-Run this token generator using `npm run dev`. You can use Postman to send a `POST` request with a body containing `channel`, `role`, `uid`, and `expireTime`. If your `POST` request is missing information, you will receive a Bad Request response telling you which information you missed. If you send all the necessary information, you will receive a successful response that looks like this:
+Run this token generator using `npm run dev`. You can use cURL to send a `POST` request in your terminal with a body containing `channel`, `role`, `uid`, and `expireTime`. 
+
+```curl
+curl -X POST http://localhost:4321/api/token.json \
+  -H "Content-Type: application/json" \
+  -d '{
+    "uid": "20",
+    "channel": "test",
+    "role": "publisher",
+    "expireTime": "3600"
+  }'
+```
+
+
+If your `POST` request is missing information, you will receive a Bad Request response telling you which information you missed. If you send all the necessary information, you will receive a successful response that looks like this:
 
 ```
 {"token":"<a long string of letters and numbers>"}
