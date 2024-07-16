@@ -1,7 +1,7 @@
 import type { APIContext } from "astro";
 import generateCredential from "../../../utils/generateCredential";
-import makeRequest from "../../../utils/makeRequest";
-import { sendBadRequest } from "../../../utils/sendResponse";
+import { makePostRequest } from "../../../utils/makeRequest";
+import { sendBadRequest, sendSuccessfulResponse } from "../../../utils/sendResponse";
 
 const APP_ID = import.meta.env.APP_ID;
 
@@ -32,8 +32,8 @@ export async function POST({ request }: APIContext) {
         }
     }
 
-    const res = await makeRequest(url, credential, JSON.stringify(payload))
+    const res = await makePostRequest(url, credential, JSON.stringify(payload))
     const data = await res.json()
 
-    return new Response(JSON.stringify(data), { status: 200 })
+    return sendSuccessfulResponse(data)
 }

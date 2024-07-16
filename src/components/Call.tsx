@@ -8,9 +8,16 @@ import AgoraRTC, {
   useLocalMicrophoneTrack,
   usePublish,
   useRTCClient,
-  useRemoteAudioTracks,
   useRemoteUsers,
 } from "agora-rtc-react";
+import { useCallback, useEffect, useState } from "react";
+
+type RecordingInfo = {
+  uid: string;
+  channel: string;
+  sid: string;
+  resourceId: string;
+};
 
 function Call(props: {
   appId: string;
@@ -22,6 +29,48 @@ function Call(props: {
     AgoraRTC.createClient({ codec: "vp8", mode: "rtc" })
   );
 
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingInfo, setRecordingInfo] = useState<RecordingInfo | null>(
+    null
+  );
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    if (isRecording) {
+      timer = setInterval(checkRecordingStatus, 10000);
+    }
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    };
+  }, [isRecording]);
+
+  const checkRecordingStatus = useCallback(async () => {
+    try {
+      const response = await fetch("/api/recording/query.json", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sid: recordingInfo!.sid,
+          resourceId: recordingInfo!.resourceId,
+        }),
+      });
+
+      if (!response.ok) {
+        setIsRecording(false);
+        setRecordingInfo(null);
+      } else {
+        console.log("Recording found and running");
+      }
+    } catch (error) {
+      console.error("Error checking recording status:", error);
+    }
+  }, [recordingInfo, setIsRecording]);
+
   return (
     <AgoraRTCProvider client={client}>
       <Videos
@@ -30,13 +79,84 @@ function Call(props: {
         token={props.token}
         uid={props.uid}
       />
-      <div className="fixed z-10 bottom-0 left-0 right-0 flex justify-center pb-4">
+      <div className="fixed z-10 bottom-0 left-0 right-0 flex justify-center pb-4 space-x-4">
         <a
-          className="px-5 py-3 text-base font-medium text-center text-white bg-red-400 rounded-lg hover:bg-red-500 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-900 w-40"
+          className="px-5 py-3 text-base font-medium text-center text-white bg-red-400 rounded-lg hover:bg-red-500 w-40"
           href="/"
         >
           End Call
         </a>
+        {isRecording ? (
+          <div
+            className="px-5 py-3 text-base font-medium text-center text-white bg-red-400 rounded-lg hover:bg-red-500  w-40"
+            onClick={async () => {
+              try {
+                const response = await fetch("/api/recording/stop.json", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    uid: recordingInfo!.uid,
+                    channel: recordingInfo!.channel,
+                    sid: recordingInfo!.sid,
+                    resourceId: recordingInfo!.resourceId,
+                  }),
+                });
+                if (response.ok) {
+                  console.log(recordingInfo);
+                  setRecordingInfo(null);
+                  setIsRecording(false);
+                  console.log("Recording stopped");
+                } else {
+                  console.error("Failed to stop recording");
+                }
+              } catch (error) {
+                console.error("Error stopping recording:", error);
+              }
+            }}
+          >
+            Stop Recording
+          </div>
+        ) : (
+          <div
+            className="px-5 py-3 text-base font-medium text-center text-white bg-green-400 rounded-lg hover:bg-green-500  w-40"
+            onClick={async () => {
+              try {
+                const response = await fetch("/api/recording/start.json", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    uid: "2",
+                    channel: props.channelName,
+                  }),
+                });
+
+                if (response.ok) {
+                  const data = await response.json();
+                  const recordingInfo = {
+                    uid: "2",
+                    channel: props.channelName,
+                    sid: data.sid,
+                    resourceId: data.resourceId,
+                  };
+                  setRecordingInfo(recordingInfo);
+                  setIsRecording(true);
+                  console.log("Recording started");
+                  console.log(recordingInfo);
+                } else {
+                  console.error("Failed to start recording");
+                }
+              } catch (error) {
+                console.error("Error starting recording:", error);
+              }
+            }}
+          >
+            Start Recording
+          </div>
+        )}
       </div>
     </AgoraRTCProvider>
   );
@@ -53,7 +173,6 @@ function Videos(props: {
     useLocalMicrophoneTrack();
   const { isLoading: isLoadingCam, localCameraTrack } = useLocalCameraTrack();
   const remoteUsers = useRemoteUsers();
-  const { audioTracks } = useRemoteAudioTracks(remoteUsers);
   const client = useRTCClient();
 
   usePublish([localMicrophoneTrack, localCameraTrack]);
@@ -64,60 +183,65 @@ function Videos(props: {
     uid: uid,
   });
 
-  useClientEvent(client, "token-privilege-will-expire", () => {
-    fetch(`/rtc/${channelName}/publisher/${uid}.json`)
-      .then(async (res) => {
-        const data = await res.json();
-        if (data) return client.renewToken(data.rtcToken);
-      })
-      .catch((error) => {
-        console.error(error);
+  useClientEvent(client, "token-privilege-will-expire", async () => {
+    try {
+      const response = await fetch("/api/token.json", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          uid: uid,
+          channel: channelName,
+          role: "publisher",
+          expireTime: 3600,
+        }),
       });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(data);
+        client.renewToken(data.token);
+      } else {
+        console.error("Failed to update token");
+      }
+    } catch (error) {
+      console.error("Error updating token:", error);
+    }
   });
 
-  audioTracks.map((track) => track.play());
   const deviceLoading = isLoadingMic || isLoadingCam;
   if (deviceLoading)
     return (
       <div className="flex flex-col items-center pt-40">Loading devices...</div>
     );
 
-  const numUsers = remoteUsers.length + 1;
-  let numCols = 1;
-  let numRows = 1;
-  switch (numUsers) {
-    case 1:
-      numCols = 1;
-      numRows = 1;
-      break;
-    case 2:
-      numCols = 2;
-      numRows = 1;
-      break;
-    case 3:
-      numCols = 3;
-      numRows = 1;
-      break;
-    case 4:
-      numCols = 2;
-      numRows = 2;
-      break;
-    default:
-      break;
-  }
-
   return (
-    <div className="flex flex-col justify-between w-full h-screen p-1">
+    <div className="flex flex-col justify-between w-full h-screen">
+      <div className="text-red-500 text-center p-4 z-50">{uid ?? "No uid"}</div>
+      <div className="text-red-500 text-center p-4 z-50">
+        {localCameraTrack?.getTrackId() ?? "No camera track"}
+      </div>
       <div
-        className={`grid grid-cols-${numCols} grid-rows-${numRows} gap-1 flex-1`}
+        className={`grid gap-1 flex-1 ${
+          remoteUsers.length > 9
+            ? `grid-cols-4`
+            : remoteUsers.length > 4
+            ? `grid-cols-3`
+            : remoteUsers.length >= 1
+            ? `grid-cols-2`
+            : `grid-cols-1`
+        }`}
       >
         <LocalVideoTrack
+          key={uid}
           track={localCameraTrack}
           play={true}
           className="w-full h-full"
         />
         {remoteUsers.map((user) => (
-          <RemoteUser user={user} />
+          <RemoteUser key={user.uid} user={user} />
         ))}
       </div>
     </div>

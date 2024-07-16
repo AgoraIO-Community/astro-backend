@@ -1,9 +1,9 @@
 import type { APIContext } from "astro";
 import generateCredential from "../../../utils/generateCredential";
 import generateResource from "../../../utils/generateResource";
-import makeRequest from "../../../utils/makeRequest";
-import { sendBadRequest } from "../../../utils/sendResponse";
-import { handleGetToken } from "../token.json";
+import { makePostRequest } from "../../../utils/makeRequest";
+import { sendBadRequest, sendSuccessfulResponse } from "../../../utils/sendResponse";
+import { handleGenerateToken } from "../token.json";
 
 const APP_ID = import.meta.env.APP_ID;
 const SECRET_KEY = import.meta.env.SECRET_KEY;
@@ -20,7 +20,7 @@ export async function POST({ request }: APIContext) {
         return sendBadRequest("uid is required")
     }
 
-    const token = await handleGetToken({ channel: channel, role: 1, uid: uid.toString(), expireTime: 45 })
+    const token = await handleGenerateToken({ channel: channel, role: 1, uid: uid.toString(), expireTime: 3600 })
     const credential = generateCredential()
     const resourceId = await generateResource(channel, credential, uid.toString(), APP_ID)
 
@@ -31,10 +31,6 @@ export async function POST({ request }: APIContext) {
         "uid": uid.toString(),
         "clientRequest": {
             "token": token,
-            "recordingConfig": {
-                "maxIdleTime": 3,
-            },
-
             "storageConfig": {
                 "secretKey": SECRET_KEY,
                 "vendor": 1,
@@ -42,10 +38,10 @@ export async function POST({ request }: APIContext) {
                 "bucket": BUCKET_NAME,
                 "accessKey": ACCESS_KEY,
                 "fileNamePrefix": [
-                    "agora",
+                    "recording",
+                    Date.now().toString()
                 ]
             },
-
             "recordingFileConfig": {
                 "avFileType": [
                     "hls",
@@ -55,15 +51,15 @@ export async function POST({ request }: APIContext) {
         },
     }
 
-    const res = await makeRequest(url, credential, JSON.stringify(payload))
+    const res = await makePostRequest(url, credential, JSON.stringify(payload))
     const data = await res.json()
     const sid = data.sid
 
 
-    return new Response(JSON.stringify({
+    return sendSuccessfulResponse({
         resourceId: resourceId,
         sid: sid
-    }), { status: 200 })
+    })
 }
 
 
