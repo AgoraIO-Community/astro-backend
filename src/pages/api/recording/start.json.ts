@@ -1,36 +1,36 @@
 import type { APIContext } from "astro";
-import { handleGetToken } from "../../pages/rtc/[channel]/[role]/[uid].json";
-import generateCredential from "../../utils/generateCredential";
-import generateResource from "../../utils/generateResource";
-import makeRequest from "../../utils/makeRequest";
+import generateCredential from "../../../utils/generateCredential";
+import generateResource from "../../../utils/generateResource";
+import { makePostRequest } from "../../../utils/makeRequest";
+import { sendBadRequest, sendSuccessfulResponse } from "../../../utils/sendResponse";
+import { handleGenerateToken } from "../token.json";
 
 const APP_ID = import.meta.env.APP_ID;
 const SECRET_KEY = import.meta.env.SECRET_KEY;
 const ACCESS_KEY = import.meta.env.ACCESS_KEY;
 const BUCKET_NAME = import.meta.env.BUCKET_NAME;
 
-export async function POST({ params, request }: APIContext) {
-    if (!params.channel) {
-        return new Response("channel is required", { status: 400 })
+export async function POST({ request }: APIContext) {
+    const { uid, channel } = await request.json()
+
+    if (!channel) {
+        return sendBadRequest("channel is required")
+    }
+    if (!uid || uid === '') {
+        return sendBadRequest("uid is required")
     }
 
-    const body = await request.json()
-    const uid = body.uid
-    const token = await handleGetToken({ channel: params.channel, role: 1, uid: uid.toString() })
+    const token = await handleGenerateToken({ channel: channel, role: 1, uid: uid.toString(), expireTime: 3600 })
     const credential = generateCredential()
-    const resourceId = await generateResource(params.channel, credential, uid.toString(), APP_ID)
+    const resourceId = await generateResource(channel, credential, uid.toString(), APP_ID)
 
 
     const url = `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/mode/mix/start`
     const payload = {
-        "cname": params.channel,
+        "cname": channel,
         "uid": uid.toString(),
         "clientRequest": {
             "token": token,
-            "recordingConfig": {
-                "maxIdleTime": 3,
-            },
-
             "storageConfig": {
                 "secretKey": SECRET_KEY,
                 "vendor": 1,
@@ -38,10 +38,10 @@ export async function POST({ params, request }: APIContext) {
                 "bucket": BUCKET_NAME,
                 "accessKey": ACCESS_KEY,
                 "fileNamePrefix": [
-                    "agora",
+                    "recording",
+                    Date.now().toString()
                 ]
             },
-
             "recordingFileConfig": {
                 "avFileType": [
                     "hls",
@@ -51,16 +51,15 @@ export async function POST({ params, request }: APIContext) {
         },
     }
 
-    const res = await makeRequest(url, credential, JSON.stringify(payload))
+    const res = await makePostRequest(url, credential, JSON.stringify(payload))
     const data = await res.json()
-    console.log(data)
     const sid = data.sid
 
 
-    return new Response(JSON.stringify({
+    return sendSuccessfulResponse({
         resourceId: resourceId,
         sid: sid
-    }), { status: 200 })
+    })
 }
 
 
