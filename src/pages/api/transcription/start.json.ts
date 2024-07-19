@@ -1,6 +1,6 @@
 import type { APIContext } from "astro";
 import { generateCredential } from "../../../utils/generateCredential";
-import { generateCloudRecordingResource } from "../../../utils/generateResource";
+import { generateResource } from "../../../utils/generateResource";
 import { makeRequest } from "../../../utils/makeRequest";
 import { sendBadRequest, sendSuccessfulResponse } from "../../../utils/sendResponse";
 import { handleGenerateToken } from "../token.json";
@@ -21,7 +21,7 @@ export async function POST({ request }: APIContext) {
     }
 
     const credential = generateCredential()
-    const resourceId = await generateCloudRecordingResource(channel, credential, uid.toString(), APP_ID)
+    const resourceId = await generateResource(channel, credential, uid.toString(), APP_ID)
     const token = await handleGenerateToken({ channel: channel, role: 1, uid: uid.toString(), expireTime: 3600 })
 
 
