@@ -15,9 +15,9 @@ This is part two of a series about building a backend for your Agora video calls
 4. AWS S3 Storage Bucket.
 
 ## Project Setup
-This guide will build upon the token generator guide. You can find [the token generator guide here](https://github.com/AgoraIO-Community/astro-backend/blob/main/docs/TOKENS.md). This guide walks through the process of building the `api/tokens.json` endpoint which returns a token used to secure your video calls. This endpoint uses a `handleGenerateToken` function which handles the token generation logic. We will be using this function directly within the cloud recording endpoint, since it is contained within the same backend server.
+This guide will build upon the [token generator guide](https://github.com/AgoraIO-Community/astro-backend/blob/main/docs/TOKENS.md). The token generator guide walks through the process of building the `api/tokens.json` endpoint which returns a token used to secure your video calls. This endpoint uses a `handleGenerateToken` function which handles the token generation logic. We will be using this function directly within the cloud recording endpoint, since it is contained within the same backend server.
 
-From the previous guide, you should have `APP_ID` and the `APP_CERTIFICATE` in your environment variables. We will add some more environment variables throughout this guide, but for now we can get started.
+From the previous guide, you should have `APP_ID` and the `APP_CERTIFICATE` in your environment variables. We will add more environment variables throughout this guide, but for now we can get started.
 
 
 ## Cloud Recording Overview
@@ -32,32 +32,32 @@ The flow for a successful Cloud Recording session is:
 ![Cloud Recording diagram](assets/cloud-recording.png)
 
 ## Enable Agora RESTful API
-This whole guide relies on a connection to the Agora RESTful API. To connect to it, you will need a Customer ID and Customer Secret. You can find these by going into the Agora Console, selecting the RESTful API tab under Developer Toolkit, and clicking the "Add a Secret" button. Then you can bring these values and store them in a `CUSTOMER_ID` and a `CUSTOMER_SECRET` environment variable.
+This whole guide relies on a connection to the Agora RESTful API. To connect to it, you will need a Customer ID and Customer Secret. You can find these by going into the Agora Console, selecting the RESTful API tab under Developer Toolkit, and clicking the "Add a Secret" button. Then copy these values and store them in a `CUSTOMER_ID` and a `CUSTOMER_SECRET` environment variable.
 
 ![RESTful API in Console](assets/restful-api.png)
 
 ## Connect to AWS S3 Bucket
-Agora supports recording into most of the popular storage solutions. For this guide, we will use AWS S3. Now, AWS is a behemoth of complicated backend configurations. For this guide we are trying to focus on the Agora implementation, so instead of building out a resilient AWS infrastructure we will use a root user access key and a public bucket. 
+Agora supports recording into most of the popular storage solutions. For this guide, we will use AWS S3. Now, AWS is a behemoth of complicated backend configurations. For this guide, we are trying to focus on the Agora implementation, so instead of building out a resilient AWS infrastructure we will use a root user access key and a public bucket. 
 
 Create a new root user acess key by going to IAM and "My security credentials" and clicking the "Create access key" button. Save this information into a `ACCESS_KEY` and `SECRET_KEY` environment variables.
 
 ![Create new access key](assets/access-key.png)
 
-Then go into S3 and create a new bucket. Since we are building this for testing purposes, uncheck the "Block all public access".Save the name your bucket in a `BUCKET_NAME` environment variable.
+Then go into S3 and create a new bucket. Since we are building this for testing purposes, uncheck the "Block all public access". Save the name your bucket in a `BUCKET_NAME` environment variable.
 
 ![Create a new bucket](assets/aws-public.png)
 
 ## Define an Endpoint
-We will have three endpoints: start, query and stop. Because our endpoints will need some input information, we will use a `POST` request so we can pass the input as the request body. You can define this in Astro by exporting a `POST` function and returning a Response object.
+We will have three endpoints: `api/recording/start.json`, `api/recording/query.json` and `api/recording/stop.json`. Because our endpoints will need some input information, we will use a `POST` request so we can pass the input as the request body.
 
 We will check that these inputs are not empty. If they are return a Bad Request response using our helper function from `utils/sendResponse.ts`. 
 
 Our endpoints will need the following information in the body:
-- `start` will need `uid` and `channel`
-- `query` will need `sid` and `resourceId`
-- `stop` will need `uid`, `channel`, `sid`, and `resourceId`
+- `api/recording/start.json` will need `uid` and `channel`
+- `api/recording/query.json` will need `sid` and `resourceId`
+- `api/recording/stop.json` will need `uid`, `channel`, `sid`, and `resourceId`
 
-If everything executes properly, at the end we send a successful response with data we will fill in later.
+If everything executes properly, at the end we send a successful response using our helper function with data we will fill in later.
 
 ```ts
 import type { APIContext } from "astro";
@@ -72,10 +72,7 @@ export async function POST({ request }: APIContext) {
         return sendBadRequest("uid is required")
     }
 
-    return sendSuccessfulResponse({
-        resourceId: null,
-        sid: null
-    })
+    return sendSuccessfulResponse("<return data>")
 }
 ```
 
@@ -84,7 +81,7 @@ The rest of this guide will be focused on the implementation of Cloud Recording 
 
 The inputs will need the `method` (we will use GET and POST), `url`, `body`, and the `credential`. 
 
-This credential will be generated by another helper function in `utils/generateCredential.ts`. This is a base-64 encoded credential using the Customer ID and Customer Secret.s
+This credential will be generated by another helper function in `utils/generateCredential.ts`. This is a base-64 encoded credential using the Customer ID and Customer Secret.
 
 ```ts
 export const generateCredential = () => {
@@ -95,7 +92,7 @@ export const generateCredential = () => {
 }
 ```
 
-This function defines all the headers, executes the request, and returns the response. 
+The `makeRequest` function defines all the headers, executes the request, and returns the response. 
 
 ```ts
 export const makeRequest = async (method: string, url: string, credential: string, body?: string) => {
@@ -122,7 +119,7 @@ export const makeRequest = async (method: string, url: string, credential: strin
 ## Generate Resource
 The first step in the cloud recording process is to generate a resource for cloud recording. Behind the scenes this spins up a backend Agora service that has the capability of recording your video calls. 
 
-> Your video call needs to be started within five minutes, or else the resource will shut down.
+> Your cloud recording needs to be started within five minutes, or else the resource will shut down.
 
 To generate this resource, we make our first request to the Agora service. This will use the `acquire` function. You must pass the channel name and the uid for the resource. 
 
@@ -152,9 +149,9 @@ export const generateResource = async (channel: string, credential: string, uid:
 ## Start Cloud Recording
 Now we can put it all together and start the recording within the POST request in the `api/recording/start.json.ts` file. We generate the credential, then use that credential to generate a resource, and create a token.
 
-Then we make a request with the `start` url, and pass in the payload. This payload is where we define all the information that the Agora cloud recording service needs.
+Then we make a request with the `start` endpoint url and pass in the payload. This payload is where we define all the information that the Agora cloud recording service needs.
 
-You can find a complete list of the properties within the [Agora documentation](https://docs.agora.io/en/cloud-recording/reference/restful-api#start-request). For this demo we will define AWS as our vendor and US_EAST_2 as our region. Then we supply all the information needed to access that storage bucket, and lastly we define the file path and the file output type.
+You can find a complete list of payload properties within the [Agora documentation](https://docs.agora.io/en/cloud-recording/reference/restful-api#start-request). For this demo we will define AWS as our vendor and US_EAST_2 as our region. Then we supply all the information needed to access that storage bucket, and lastly we define the file path and the file output type.
 
 
 ```ts
@@ -200,7 +197,6 @@ return sendSuccessfulResponse({
 })
 ```
 
-
 Upon an positive response, you will receive a `sid`. Both the `sid` and the `resourceId` will need to be used to stop or query the recording, so they must be returned to the caller.
 
 To test this, run your backend using `npm run dev`. You can use cURL to send a `POST` request in your terminal with a body containing `uid` and `channel`.
@@ -238,7 +234,7 @@ return sendSuccessfulResponse(data)
 
 To test this you can use cURL and pass in the `sid` and `resourceId` from the return of the start endpoint. 
 
-> Note: You must be within a video call associated with this App Id and channel. The Agora backend doesn't actually start recording anything if there is nothing to record. 
+> Note: You must be within a video call associated with this App Id and channel. The Agora backend doesn't start recording anything if there is nothing to record. 
 
 ```
 curl -X POST http://localhost:4321/api/recording/query.json \
@@ -283,4 +279,6 @@ curl -X POST http://localhost:4321/api/recording/stop.json \
   }'
 ```
 
-You have a fully working cloud recording backend with Astro. Now you no longer have to worry about needing to join the meetings. Now that you have a token generator and a cloud recording backend built in Astro, you can add a front end and have a secure video call that can be recorded all from one codebase. Here is a [guide on how to build a Video Call front end with Astro](https://www.agora.io/en/blog/build-a-video-call-app-with-astro-and-reactjs/).
+You now have a fully working cloud recording backend with Astro and no longer have to worry about having to join every meeting. 
+
+Now that you have a token generator and a cloud recording backend built in Astro, you can add a front end and have a secure video call that can be recorded all from one codebase. Here is a [guide on how to build a Video Call front end with Astro](https://www.agora.io/en/blog/build-a-video-call-app-with-astro-and-reactjs/).
