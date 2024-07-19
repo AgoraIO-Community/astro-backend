@@ -1,8 +1,6 @@
-import { makePostRequest } from "./makeRequest"
+import { makeRequest } from "./makeRequest"
 
-
-
-const generateResource = async (channel: string, credential: string, uid: string, appId: string) => {
+export const generateResource = async (channel: string, credential: string, uid: string, appId: string) => {
 
     const payload = {
         "cname": channel,
@@ -12,12 +10,9 @@ const generateResource = async (channel: string, credential: string, uid: string
 
     const url = `https://api.agora.io/v1/apps/${appId}/cloud_recording/acquire`
 
-    const res = await makePostRequest(url, credential, JSON.stringify(payload))
+    const res = await makeRequest("POST", url, credential, JSON.stringify(payload))
     const data = await res.json()
     const resourceId = data["resourceId"]
 
     return resourceId
 }
-
-
-export default generateResource

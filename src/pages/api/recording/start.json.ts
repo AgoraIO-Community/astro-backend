@@ -1,7 +1,7 @@
 import type { APIContext } from "astro";
-import generateCredential from "../../../utils/generateCredential";
-import generateResource from "../../../utils/generateResource";
-import { makePostRequest } from "../../../utils/makeRequest";
+import { generateCredential } from "../../../utils/generateCredential";
+import { generateResource } from "../../../utils/generateResource";
+import { makeRequest } from "../../../utils/makeRequest";
 import { sendBadRequest, sendSuccessfulResponse } from "../../../utils/sendResponse";
 import { handleGenerateToken } from "../token.json";
 
@@ -20,9 +20,9 @@ export async function POST({ request }: APIContext) {
         return sendBadRequest("uid is required")
     }
 
-    const token = await handleGenerateToken({ channel: channel, role: 1, uid: uid.toString(), expireTime: 3600 })
     const credential = generateCredential()
     const resourceId = await generateResource(channel, credential, uid.toString(), APP_ID)
+    const token = await handleGenerateToken({ channel: channel, role: 1, uid: uid.toString(), expireTime: 3600 })
 
 
     const url = `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/mode/mix/start`
@@ -51,7 +51,7 @@ export async function POST({ request }: APIContext) {
         },
     }
 
-    const res = await makePostRequest(url, credential, JSON.stringify(payload))
+    const res = await makeRequest("POST", url, credential, JSON.stringify(payload))
     const data = await res.json()
     const sid = data.sid
 
@@ -61,5 +61,3 @@ export async function POST({ request }: APIContext) {
         sid: sid
     })
 }
-
-
