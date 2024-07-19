@@ -18,13 +18,13 @@ export const generateCloudRecordingResource = async (channel: string, credential
 }
 
 
-export const generateRealTimeTranscriptionResource = async (channel: string, credential: string, uid: string, appId: string) => {
+export const generateRealTimeTranscriptionResource = async (channel: string, credential: string, appId: string) => {
 
     const payload = {
         "instanceId": channel
     }
 
-    const url = `https://api.agora.io/v1/projects/{APP_ID}/rtsc/speech-to-text/builderTokens`
+    const url = `https://api.agora.io/v1/projects/${appId}/rtsc/speech-to-text/builderTokens`
 
     const res = await makeRequest("POST", url, credential, JSON.stringify(payload))
     const data = await res.json()

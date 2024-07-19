@@ -1,6 +1,6 @@
 import type { APIContext } from "astro";
 import { generateCredential } from "../../../utils/generateCredential";
-import { generateResource } from "../../../utils/generateResource";
+import { generateRealTimeTranscriptionResource } from "../../../utils/generateResource";
 import { makeRequest } from "../../../utils/makeRequest";
 import { sendBadRequest, sendSuccessfulResponse } from "../../../utils/sendResponse";
 import { handleGenerateToken } from "../token.json";
@@ -21,43 +21,69 @@ export async function POST({ request }: APIContext) {
     }
 
     const credential = generateCredential()
-    const resourceId = await generateResource(channel, credential, uid.toString(), APP_ID)
+    const builderToken = await generateRealTimeTranscriptionResource(channel, credential, APP_ID)
     const token = await handleGenerateToken({ channel: channel, role: 1, uid: uid.toString(), expireTime: 3600 })
 
 
-    const url = `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/mode/mix/start`
+    const url = `https://api.agora.io/v1/projects/${APP_ID}/rtsc/speech-to-text/tasks?builderToken=${builderToken}`
     const payload = {
-        "cname": channel,
-        "uid": uid.toString(),
-        "clientRequest": {
-            "token": token,
-            "storageConfig": {
-                "secretKey": SECRET_KEY,
-                "vendor": 1,
-                "region": 1,
-                "bucket": BUCKET_NAME,
-                "accessKey": ACCESS_KEY,
-                "fileNamePrefix": [
-                    "recording",
-                    Date.now().toString()
-                ]
-            },
-            "recordingFileConfig": {
-                "avFileType": [
-                    "hls",
-                    "mp4"
-                ]
-            },
+        "audio": {
+            "subscribeSource": "AGORARTC",
+            "agoraRtcConfig": {
+                "channelName": channel,
+                "uid": "100",
+                "token": token,
+                "channelType": "LIVE_TYPE",
+                "subscribeConfig": {
+                    "subscribeMode": "CHANNEL_MODE"
+                },
+                "maxIdleTime": 60
+            }
         },
+        "config": {
+            "features": [
+                "RECOGNIZE"
+            ],
+            "recognizeConfig": {
+                "language": "en-US,es-ES",
+                "model": "Model",
+                "output": {
+                    "destinations": [
+                        "AgoraRTCDataStream",
+                        "Storage"
+                    ],
+                    "agoraRTCDataStream": {
+                        "channelName": channel,
+                        "uid": "101",
+                        "token": token
+                    },
+                    "cloudStorage": [
+                        {
+                            "format": "HLS",
+                            "storageConfig": {
+                                "accessKey": ACCESS_KEY,
+                                "secretKey": SECRET_KEY,
+                                "bucket": BUCKET_NAME,
+                                "vendor": 1,
+                                "region": 1,
+                                "fileNamePrefix": [
+                                    "rtt"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        }
     }
 
     const res = await makeRequest("POST", url, credential, JSON.stringify(payload))
     const data = await res.json()
-    const sid = data.sid
+    const taskId = data.taskId
 
 
     return sendSuccessfulResponse({
-        resourceId: resourceId,
-        sid: sid
+        taskId: taskId,
+        builderToken: builderToken,
     })
 }
