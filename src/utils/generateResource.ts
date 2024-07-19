@@ -1,6 +1,6 @@
 import { makeRequest } from "./makeRequest"
 
-export const generateResource = async (channel: string, credential: string, uid: string, appId: string) => {
+export const generateCloudRecordingResource = async (channel: string, credential: string, uid: string, appId: string) => {
 
     const payload = {
         "cname": channel,
@@ -15,4 +15,20 @@ export const generateResource = async (channel: string, credential: string, uid:
     const resourceId = data["resourceId"]
 
     return resourceId
+}
+
+
+export const generateRealTimeTranscriptionResource = async (channel: string, credential: string, uid: string, appId: string) => {
+
+    const payload = {
+        "instanceId": channel
+    }
+
+    const url = `https://api.agora.io/v1/projects/{APP_ID}/rtsc/speech-to-text/builderTokens`
+
+    const res = await makeRequest("POST", url, credential, JSON.stringify(payload))
+    const data = await res.json()
+    const builderToken = data["tokenName"]
+
+    return builderToken
 }
