@@ -128,7 +128,7 @@ This function will only be called when a video is being started, so there is no 
 ```ts
 import { makeRequest } from "./makeRequest"
 
-export const generateResource = async (channel: string, credential: string, uid: string, appId: string) => {
+export const generateCloudRecordingResource = async (channel: string, credential: string, uid: string, appId: string) => {
 
     const payload = {
         "cname": channel,
@@ -156,7 +156,7 @@ You can find a complete list of payload properties within the [Agora documentati
 
 ```ts
 const credential = generateCredential()
-const resourceId = await generateResource(channel, credential, uid.toString(), APP_ID)
+const resourceId = await generateCloudRecordingResource(channel, credential, uid.toString(), APP_ID)
 const token = await handleGenerateToken({ channel: channel, role: 1, uid: uid.toString(), expireTime: 3600 })
 
 
