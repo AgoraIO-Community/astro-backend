@@ -23,7 +23,7 @@ export async function POST({ request }: APIContext) {
     const outputToken = await handleGenerateToken({ channel: channel, role: 2, uid: outputUid, expireTime: 3600 })
 
     const url = `https://api.agora.io/v1/projects/${APP_ID}/rtsc/speech-to-text/tasks?builderToken=${builderToken}`
-    const payload = {
+    const body = {
         "audio": {
             "subscribeSource": "AGORARTC",
             "agoraRtcConfig": {
@@ -57,7 +57,7 @@ export async function POST({ request }: APIContext) {
         }
     }
 
-    const res = await makeRequest("POST", url, credential, JSON.stringify(payload))
+    const res = await makeRequest("POST", url, credential, JSON.stringify(body))
     const data = await res.json()
     const taskId = data.taskId
 

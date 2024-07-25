@@ -23,7 +23,7 @@ export async function POST({ request }: APIContext) {
 
 
     const url = `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/mode/mix/start`
-    const payload = {
+    const body = {
         "cname": channel,
         "uid": "1",
         "clientRequest": {
@@ -48,7 +48,7 @@ export async function POST({ request }: APIContext) {
         },
     }
 
-    const res = await makeRequest("POST", url, credential, JSON.stringify(payload))
+    const res = await makeRequest("POST", url, credential, JSON.stringify(body))
     const data = await res.json()
     const sid = data.sid
 
