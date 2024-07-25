@@ -7,6 +7,7 @@ const APP_ID = import.meta.env.APP_ID;
 
 export async function POST({ request }: APIContext) {
     const { taskId, builderToken } = await request.json()
+    console.log(taskId, builderToken)
 
     if (!taskId) {
         return sendBadRequest("taskId is required")
@@ -15,12 +16,12 @@ export async function POST({ request }: APIContext) {
         return sendBadRequest("builderToken is required")
     }
 
+
     const credential = generateCredential()
 
     const url = `https://api.agora.io/v1/projects/${APP_ID}/rtsc/speech-to-text/tasks/${taskId}?builderToken=${builderToken}`
 
-
-    const res = await makeRequest("DELETE", url, credential)
+    const res = await makeRequest("GET", url, credential)
     const data = await res.json()
 
     return sendSuccessfulResponse(data)

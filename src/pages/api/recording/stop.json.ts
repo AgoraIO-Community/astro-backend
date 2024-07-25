@@ -6,13 +6,10 @@ import { sendBadRequest, sendSuccessfulResponse } from "../../../utils/sendRespo
 const APP_ID = import.meta.env.APP_ID;
 
 export async function POST({ request }: APIContext) {
-    const { uid, channel, sid, resourceId } = await request.json()
+    const { channel, sid, resourceId } = await request.json()
 
     if (!channel) {
         return sendBadRequest("channel is required")
-    }
-    if (!uid || uid === '') {
-        return sendBadRequest("uid is required")
     }
     if (!sid) {
         return sendBadRequest("sid is required")
@@ -27,7 +24,7 @@ export async function POST({ request }: APIContext) {
     const url = `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/sid/${sid}/mode/mix/stop`
     const payload = {
         "cname": channel,
-        "uid": uid.toString(),
+        "uid": "1",
         "clientRequest": {
         }
     }
