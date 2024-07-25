@@ -7,7 +7,6 @@ const APP_ID = import.meta.env.APP_ID;
 
 export async function POST({ request }: APIContext) {
     const { taskId, builderToken } = await request.json()
-    console.log(taskId, builderToken)
 
     if (!taskId) {
         return sendBadRequest("taskId is required")

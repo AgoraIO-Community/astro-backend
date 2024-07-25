@@ -6,9 +6,6 @@ import { sendBadRequest, sendSuccessfulResponse } from "../../../utils/sendRespo
 import { handleGenerateToken } from "../token.json";
 
 const APP_ID = import.meta.env.APP_ID;
-const SECRET_KEY = import.meta.env.SECRET_KEY;
-const ACCESS_KEY = import.meta.env.ACCESS_KEY;
-const BUCKET_NAME = import.meta.env.BUCKET_NAME;
 
 export async function POST({ request }: APIContext) {
     const { channel } = await request.json()
@@ -63,9 +60,6 @@ export async function POST({ request }: APIContext) {
     const res = await makeRequest("POST", url, credential, JSON.stringify(payload))
     const data = await res.json()
     const taskId = data.taskId
-
-    console.log(data)
-
 
     return sendSuccessfulResponse({
         taskId: taskId,
