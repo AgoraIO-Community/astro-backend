@@ -219,10 +219,6 @@ function Videos(props: {
 
   return (
     <div className="flex flex-col justify-between w-full h-screen">
-      <div className="text-red-500 text-center p-4 z-50">{uid ?? "No uid"}</div>
-      <div className="text-red-500 text-center p-4 z-50">
-        {localCameraTrack?.getTrackId() ?? "No camera track"}
-      </div>
       <div
         className={`grid gap-1 flex-1 ${
           remoteUsers.length > 9

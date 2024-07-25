@@ -5,8 +5,8 @@ import Call from "../../components/Call.tsx";
 import { handleGenerateToken } from "../api/token.json";
 
 const { channelName } = Astro.params;
-// Random user uid. Uid 1 and 2 are reserved for cloud recording and real time transcription.
-const uid = (Math.floor(Math.random() * 250) + 3).toString();
+// Random user uid. Uid 1,2,3 are reserved for cloud recording and real time transcription.
+const uid = (Math.floor(Math.random() * 250) + 4).toString();
 
 const token = await handleGenerateToken({
   channel: channelName!,
