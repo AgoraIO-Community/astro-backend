@@ -196,13 +196,12 @@ return sendSuccessfulResponse({
 
 Upon a successful response, you will receive a `sid`. Both the `sid` and the `resourceId` will need to be used to stop or query the recording, so they must be returned to the caller.
 
-To test this, run your backend using `npm run dev`. You can use cURL to send a `POST` request in your terminal with a body containing `uid` and `channel`.
+To test this, run your backend using `npm run dev`. You can use cURL to send a `POST` request in your terminal with a body containing `channel`.
 
 ```
 curl -X POST http://localhost:4321/api/recording/start.json \
   -H "Content-Type: application/json" \
   -d '{
-    "uid": "1",
     "channel": "test"
   }'
 ```
@@ -270,7 +269,6 @@ Once again, you can test this using cURL.
 curl -X POST http://localhost:4321/api/recording/stop.json \
   -H "Content-Type: application/json" \
   -d '{
-    "uid": "1",
     "channel": "test"
     "sid": "<from start command return>",
     "resourceId": "<from start command return>"
