@@ -144,7 +144,7 @@ export const generateCloudRecordingResource = async (channel: string, credential
 ```
 
 ## Start Cloud Recording
-We can combine the previous sections and start the recording within the POST request in the `api/recording/start.json.ts` file. We generate the credential, then use that credential to generate a resource, and create a token.
+We can combine the previous sections and start the recording within the POST function in the `api/recording/start.json.ts` file. We generate the credential, then use that credential to generate a resource, and create a token.
 
 Then, we make a request with the Agora `start` endpoint URL and pass in the request body. This body defines all the information that the Agora cloud recording service needs.
 
