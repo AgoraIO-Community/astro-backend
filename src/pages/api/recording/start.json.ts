@@ -17,15 +17,16 @@ export async function POST({ request }: APIContext) {
         return sendBadRequest("channel is required")
     }
 
+    const recordingUid = "1"
     const credential = generateCredential()
-    const resourceId = await generateCloudRecordingResource(channel, credential, "1", APP_ID)
-    const token = await handleGenerateToken({ channel: channel, role: 1, uid: "1", expireTime: 3600 })
+    const resourceId = await generateCloudRecordingResource(channel, credential, recordingUid, APP_ID)
+    const token = await handleGenerateToken({ channel: channel, role: 1, uid: recordingUid, expireTime: 3600 })
 
 
     const url = `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/mode/mix/start`
     const body = {
         "cname": channel,
-        "uid": "1",
+        "uid": recordingUid,
         "clientRequest": {
             "token": token,
             "storageConfig": {
