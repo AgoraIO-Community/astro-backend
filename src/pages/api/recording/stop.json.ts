@@ -18,13 +18,13 @@ export async function POST({ request }: APIContext) {
         return sendBadRequest("resourceId is required")
     }
 
-
+    const recordingUid = "1"
     const credential = generateCredential()
 
     const url = `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/sid/${sid}/mode/mix/stop`
     const body = {
         "cname": channel,
-        "uid": "1",
+        "uid": recordingUid,
         "clientRequest": {
         }
     }
