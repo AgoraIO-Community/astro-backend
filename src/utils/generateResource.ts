@@ -18,7 +18,7 @@ export const generateCloudRecordingResource = async (channel: string, credential
 }
 
 
-export const generateRealTimeTranscriptionResource = async (channel: string, credential: string, appId: string) => {
+export const generateSpeechToTextResource = async (channel: string, credential: string, appId: string) => {
 
     const body = {
         "instanceId": channel

@@ -1,7 +1,7 @@
 import agoraToken from "agora-token";
 import type { APIContext } from "astro";
 import { generateCredential } from "../../../utils/generateCredential";
-import { generateRealTimeTranscriptionResource } from "../../../utils/generateResource";
+import { generateSpeechToTextResource } from "../../../utils/generateResource";
 import { makeRequest } from "../../../utils/makeRequest";
 import { sendBadRequest, sendSuccessfulResponse } from "../../../utils/sendResponse";
 import { handleGenerateToken } from "../token.json";
@@ -19,7 +19,7 @@ export async function POST({ request }: APIContext) {
     const outputUid = "3"
 
     const credential = generateCredential()
-    const builderToken = await generateRealTimeTranscriptionResource(channel, credential, APP_ID)
+    const builderToken = await generateSpeechToTextResource(channel, credential, APP_ID)
     const botToken = await handleGenerateToken({ channel: channel, role: agoraToken.RtcRole.PUBLISHER, uid: botUid, expireTime: 3600 })
     const outputToken = await handleGenerateToken({ channel: channel, role: agoraToken.RtcRole.PUBLISHER, uid: outputUid, expireTime: 3600 })
 
