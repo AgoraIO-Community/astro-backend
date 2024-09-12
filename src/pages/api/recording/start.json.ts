@@ -1,3 +1,4 @@
+import agoraToken from "agora-token";
 import type { APIContext } from "astro";
 import { generateCredential } from "../../../utils/generateCredential";
 import { generateCloudRecordingResource } from "../../../utils/generateResource";
@@ -20,7 +21,7 @@ export async function POST({ request }: APIContext) {
     const recordingUid = "1"
     const credential = generateCredential()
     const resourceId = await generateCloudRecordingResource(channel, credential, recordingUid, APP_ID)
-    const token = await handleGenerateToken({ channel: channel, role: 1, uid: recordingUid, expireTime: 3600 })
+    const token = await handleGenerateToken({ channel: channel, role: agoraToken.RtcRole.PUBLISHER, uid: recordingUid, expireTime: 3600 })
 
 
     const url = `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/mode/mix/start`

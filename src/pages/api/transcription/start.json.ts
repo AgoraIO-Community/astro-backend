@@ -1,3 +1,4 @@
+import agoraToken from "agora-token";
 import type { APIContext } from "astro";
 import { generateCredential } from "../../../utils/generateCredential";
 import { generateRealTimeTranscriptionResource } from "../../../utils/generateResource";
@@ -19,41 +20,23 @@ export async function POST({ request }: APIContext) {
 
     const credential = generateCredential()
     const builderToken = await generateRealTimeTranscriptionResource(channel, credential, APP_ID)
-    const botToken = await handleGenerateToken({ channel: channel, role: 1, uid: botUid, expireTime: 3600 })
-    const outputToken = await handleGenerateToken({ channel: channel, role: 2, uid: outputUid, expireTime: 3600 })
+    const botToken = await handleGenerateToken({ channel: channel, role: agoraToken.RtcRole.PUBLISHER, uid: botUid, expireTime: 3600 })
+    const outputToken = await handleGenerateToken({ channel: channel, role: agoraToken.RtcRole.PUBLISHER, uid: outputUid, expireTime: 3600 })
 
     const url = `https://api.agora.io/v1/projects/${APP_ID}/rtsc/speech-to-text/tasks?builderToken=${builderToken}`
+
+
     const body = {
-        "audio": {
-            "subscribeSource": "AGORARTC",
-            "agoraRtcConfig": {
-                "channelName": channel,
-                "uid": botUid,
-                "token": botToken,
-                "channelType": "LIVE_TYPE",
-                "subscribeConfig": {
-                    "subscribeMode": "CHANNEL_MODE"
-                }
-            }
-        },
-        "config": {
-            "features": [
-                "RECOGNIZE"
-            ],
-            "recognizeConfig": {
-                "language": "en-US,es-ES",
-                "model": "Model",
-                "output": {
-                    "destinations": [
-                        "AgoraRTCDataStream",
-                    ],
-                    "agoraRTCDataStream": {
-                        "channelName": channel,
-                        "uid": outputUid,
-                        "token": outputToken
-                    }
-                }
-            }
+        "languages": [
+            "en-US"
+        ],
+        "maxIdleTime": 60,
+        "rtcConfig": {
+            "channelName": channel,
+            "subBotUid": botUid,
+            "subBotToken": botToken,
+            "pubBotUid": outputUid,
+            "pubBotToken": outputToken
         }
     }
 
