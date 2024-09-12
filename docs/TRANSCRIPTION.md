@@ -5,7 +5,7 @@ description: Learn how to build a backend to initiate Real Time Transcription us
 
 50% of Americans watch content with subtitles. Why can't we have this with video calls? Actually, we can do this by using Real-Time Transcription with Agora.
 
-This guide is the third part in a series about building backends with Astro. The first guide covered Token Generation with Astro so we can secure our video calls. We will use the token generation logic in this guide. The second guide was about recording your video to a storage provider of your choice. Real-Time Transcription is a separate feature, so it does not rely on the cloud recording guide, but we will need to generate tokens. Let's get started.
+This guide is the third part in a series about building backends with Astro. The first guide covered Token Generation with Astro so we can secure our video calls. We will use the token generation logic in this guide. The second guide was about recording your video to a storage provider of your choice. Real-Time Transcription is a separate feature, so it does not rely on the [Cloud Recording Guide](https://www.agora.io/en/blog/build-a-cloud-recording-backend-with-astro/), but we will need to generate tokens. Let's get started.
 
 ## Prerequisites
 1. NodeJS and Astro installed.
@@ -56,7 +56,7 @@ export async function POST({ request }: APIContext) {
 ```
 
 ## Make Request Helper Functions
-The rest of this guide will focus on the implementation of Cloud Recording, which includes calling the Agora API. To simplify the code and have a uniform request structure, we will set up a helper function in `utils/makeRequest.ts`. 
+The rest of this guide will focus on the implementation of Real Time Transcription, which includes calling the Agora API. To simplify the code and have a uniform request structure, we will set up a helper function in `utils/makeRequest.ts`. 
 
 The `makeRequest` function defines all the headers, executes the request, and returns the response. 
 
@@ -195,7 +195,7 @@ If your `POST` request is missing information, you will receive a Bad Request re
 ```
 
 ## Stop Transcribing
-To stop the transcription, you must send a `DELETE` command to a URL containing the App ID, Task ID, and the Builder Token.
+To stop the transcription, you must send a `DELETE` request to a URL containing the App ID, Task ID, and the Builder Token.
 
 ```ts
 const credential = generateCredential()
